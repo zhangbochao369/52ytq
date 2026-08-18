@@ -648,21 +648,24 @@ function fwStop(){
 }
 
 // ============ 3. Audio ============
+// Preload music at page load so it's buffered before the button is clicked
+var bgm = null;
+try{
+  bgm = new Audio('m-taku.mp3');
+  bgm.loop = true;
+  bgm.volume = 0.7;
+  bgm.preload = 'auto'; // start downloading immediately at page load
+}catch(e){}
+
 function playMusic(){
+  if(!bgm) return;
   try{
-    // Stream via <audio> element - starts playing as soon as data buffers (no need to download whole file)
-    const audio = new Audio('m-taku.mp3');
-    audio.loop = true;
-    audio.volume = 0.7;
-    audio.preload = 'auto';
-    // Try to play; resume on any user interaction as fallback
-    const p = audio.play();
-    if(p && p.catch) p.catch(()=>{});
-    // If autoplay is blocked, retry on next tap
-    document.addEventListener('touchstart', function once(){
-      audio.play().catch(()=>{});
-      document.removeEventListener('touchstart', once);
-    });
+    const p = bgm.play();
+    if(p && p.catch) p.catch(function(){});
+    // If autoplay blocked, retry on next interaction
+    var retry = function(){ bgm.play().catch(function(){}); };
+    document.addEventListener('touchstart', retry, { once: true });
+    document.addEventListener('click', retry, { once: true });
   }catch(e){}
 }
 
