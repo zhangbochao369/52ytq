@@ -650,17 +650,19 @@ function fwStop(){
 // ============ 3. Audio ============
 function playMusic(){
   try{
-    const AC=window.AudioContext||window.webkitAudioContext;
-    const ctx=new AC();
-    fetch('m-taku.mp3').then(r=>{
-      if(!r.ok) throw new Error('404');
-      return r.arrayBuffer();
-    }).then(buf=>ctx.decodeAudioData(buf)).then(decoded=>{
-      const src=ctx.createBufferSource();
-      src.buffer=decoded; src.loop=true;
-      const g=ctx.createGain(); g.gain.value=0.70;
-      src.connect(g); g.connect(ctx.destination); src.start(0);
-    }).catch(()=>{});
+    // Stream via <audio> element - starts playing as soon as data buffers (no need to download whole file)
+    const audio = new Audio('m-taku.mp3');
+    audio.loop = true;
+    audio.volume = 0.7;
+    audio.preload = 'auto';
+    // Try to play; resume on any user interaction as fallback
+    const p = audio.play();
+    if(p && p.catch) p.catch(()=>{});
+    // If autoplay is blocked, retry on next tap
+    document.addEventListener('touchstart', function once(){
+      audio.play().catch(()=>{});
+      document.removeEventListener('touchstart', once);
+    });
   }catch(e){}
 }
 
